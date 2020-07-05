@@ -53,8 +53,8 @@ class Quark(object):  #Define class/object
             self.angle = math.atan(self.changeiny / self.changeinx)
 
     def Trajectory(self, trajX, trajY): ## moving dot
-        self.x += round(self.trajX)
-        self.y += round(self.trajY)
+        self.x += self.trajX
+        self.y += self.trajY
 
     def changexy(self):
         self.changeinx = self.x - self.prevX
@@ -63,7 +63,7 @@ class Quark(object):  #Define class/object
 
     def draw(self, win):
        # pygame.draw.circle(win, (255, 230, 0), (self.x, self.y), 3)
-        pygame.draw.circle(win, self.color, (self.x, self.y), self.radius, self.width)
+        pygame.draw.circle(win, self.color, (round(self.x), round(self.y)), self.radius, self.width)
 
     def up(self, radius, width, color, charge):
         self.radius = 5
