@@ -53,8 +53,8 @@ class Quark(object):  #Define class/object
             self.angle = math.atan(self.changeiny / self.changeinx)
 
     def Trajectory(self, trajX, trajY): ## moving dot
-        self.x += self.trajX
-        self.y += self.trajY
+        self.x += round(self.trajX)
+        self.y += round(self.trajY)
 
     def changexy(self):
         self.changeinx = self.x - self.prevX
@@ -136,7 +136,7 @@ while run:
             startTime = pygame.time.get_ticks()
             breed = Quark.up
         #    Quark.angleToTrajectory(Quarks[quark], rotDeg)
-            Quarks.append(Quark(round(screenWidth // 2), round(screenHeight // 2), rotDeg, 100, 10, 0, (255, 230, 0), 20))  ##spawn up but not referenced yet
+            Quarks.append(Quark(round(screenWidth // 2), round(screenHeight // 2), rotDeg, 5, 10, 0, (255, 230, 0), 20))  ##spawn up but not referenced yet
             flag2 = False
 
         if not flag2 and ((pygame.time.get_ticks() - startTime) >= 50):
