@@ -136,7 +136,7 @@ while run:
             startTime = pygame.time.get_ticks()
             breed = Quark.up
         #    Quark.angleToTrajectory(Quarks[quark], rotDeg)
-            Quarks.append(Quark(round(screenWidth // 2), round(screenHeight // 2), rotDeg, 100, 10, 0, (255, 230, 0), 20))
+            Quarks.append(Quark(round(screenWidth // 2), round(screenHeight // 2), rotDeg, 100, 10, 0, (255, 230, 0), 20))  ##spawn up but not referenced yet
             flag2 = False
 
         if not flag2 and ((pygame.time.get_ticks() - startTime) >= 50):
