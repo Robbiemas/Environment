@@ -13,10 +13,64 @@ win = pygame.display.set_mode((screenWidth, screenHeight))
 bg = 0, 0, 0
 clock = pygame.time.Clock()
 
+def resolvecharge(particle, otherParticle, dist):
+    x = particle.x
+    y = particle.y
+
+    vx = particle.velocity[0]
+    vy = particle.velocity[1]
+
+    deltaVx = vx - particle.prevVelocity[0]
+    deltaVy = vy - particle.prevVelocity[1]
+
+    mass = particle.mass
+    dt = 0.052
+
+    x_target = otherParticle.x
+    y_target = otherParticle.y
+
+    q = particle.charge
+    E = 0.0
+    Ey = 0.0
+
+    qtarget = otherParticle.index("charge")
+
+    k = 100000
+
+    vx += deltaVx
+    vy += deltaVy
+
+    #update location
+    x += vx * dt
+    y += vy * dt
+
+   # deltaVx = 0
+   # deltaVy = 0
+    r = dist + 0.000001
+
+    if (x < x_target):
+        E = -(k * q * qtarget) / (r ** 2)
+    elif (x > x_target):
+        E = (k * q * qtarget) / (r ** 2)
+    if (y < y_target):
+        Ey = (k * q * qtarget) / (r ** 2)
+    elif (y > y_target):
+        Ey = -(k * q * qtarget) / (r ** 2)
+
+    deltaVx = (q * E / mass) * dt
+    deltaVy = (q * Ey / mass) * dt
+
+    particle.acceleration[0] += deltaVx
+    particle.acceleration[1] += deltaVy
+    print(str(particle.acceleration[0]) + "  " + str(particle.acceleration[1]))
+    particle.setMomentum()
+
+
+
 
 def momentum(aMass, bMass, aVel, bVel):
     #         10      2     5     -3
-    print(str(aVel) + "  INCOMING VELOCITIES  " + str(bVel))
+  #  print(str(aVel) + "  INCOMING VELOCITIES  " + str(bVel))
     GalTransform = -bVel      # == 3                                       | change sign of 2nd velocity for further use
     aVel += GalTransform      # == 5+3 = 8                                 | combine velocities
     V1 = aVel    # 8                                                       | save combined velocities
@@ -28,12 +82,12 @@ def momentum(aMass, bMass, aVel, bVel):
     bVel = ((2 * aMass) / (aMass + bMass)) * V1       # 5/3 * 8  = 13.33   | multiply the mass % of mass a by 2 then
 #                                                                          | multiply it by the totaled velocity
 #                                                                          | for new velocity of momentum transfer
-    print(str(aVel) + "  MID VELOCITIES  " + str(bVel))
+   # print(str(aVel) + "  MID VELOCITIES  " + str(bVel))
 
     aVel -= GalTransform   # 5.33 - 3 = 2.33                                | add original impact velocity of b
     bVel -= GalTransform   # 13.33 - 3 = 10.33                              | add back original impact velocity of b
-    print(str(aMass) + "  Masses  " + str(bMass))
-    print(str(aVel) + "  LOOK HERE  " + str(bVel))
+  #  print(str(aMass) + "  Masses  " + str(bMass))
+  #  print(str(aVel) + "  LOOK HERE  " + str(bVel))
     return (aVel, bVel)
 
 #Old function involving rotating the trajectory
@@ -170,31 +224,49 @@ class Quark(object):  #Define class/object
         self.momentum = [self.velocity[0] * self.mass, self.velocity[1] * self.mass]
         self.flagx = False
         self.flagy = False
+        self.prevVelocity = [0, 0]
+
+        self.acceleration = [0, 0]
         #self.angle = math.degrees(math.tan(self.velocity[1] / self.velocity[0]))
 
     def setMomentum(self):
-        self.velocity = [self.trajectory[0] * self.speed, self.trajectory[1] * self.speed]
+        if self.speed > 20:
+            self.speed = 20
+        self.velocity = [(self.trajectory[0] * self.speed) + self.acceleration[0], (self.trajectory[1] * self.speed) + self.acceleration[1]]
         self.momentum = [self.velocity[0] * self.mass, self.velocity[1] * self.mass]
 
+
     def checkScreenEdge(self):
-        if (((screenWidth - self.radius) < self.x) and not self.flagx) or ((self.x < self.radius) and not self.flagx):
+        if (screenHeight - self.radius) < self.y:
+            self.y = screenHeight - self.radius
+        if self.radius > self.y:
+            self.y = self.radius
+        if (screenWidth - self.radius) < self.x:
+            self.x = screenWidth - self.radius
+        if self.radius > self.x:
+            self.x = self.radius
+        if (((screenWidth - self.radius) == self.x) and not self.flagx) or ((self.x == self.radius) and not self.flagx):
             self.trajectory[0] *= -1
-            self.setMomentum()
-            self.bounce = 'ready'
+            self.acceleration[0] *= 0
+        #    self.setMomentum()
+          #  self.bounce = 'ready'
             self.trajectorytoAngle()
             self.flagx = True
 
-        if (((screenHeight - self.radius) < self.y) and not self.flagy) or ((self.y < self.radius) and not self.flagy):
+        if (((screenHeight - self.radius) == self.y) and not self.flagy) or ((self.y == self.radius) and not self.flagy):
             self.trajectory[1] *= -1
-            self.setMomentum()
-            self.bounce = 'ready'
+            self.acceleration[1] *= 0
+         #   self.setMomentum()
+           # self.bounce = 'ready'
             self.trajectorytoAngle()
             self.flagy = True
 
         if screenWidth - self.radius > self.x > self.radius:
             self.flagx = False
+            self.bounce = 'ready'
         if screenHeight - self.radius > self.y > self.radius:
             self.flagy = False
+            self.bounce = 'ready'
 
 
     def angleToTrajectory(self, angle):   #method
@@ -209,6 +281,7 @@ class Quark(object):  #Define class/object
         self.setMomentum()
         self.x += self.velocity[0]
         self.y += self.velocity[1]
+
 
     def changexy(self):
         self.changeinx = self.x - self.prevX
@@ -231,6 +304,8 @@ class Quark(object):  #Define class/object
             return float(self.trajectory[1])
         if variable == 'mass':
             return int(self.mass)
+        if variable == 'charge':
+            return float(self.charge)
 
 
 class Breed(object):
@@ -253,35 +328,35 @@ class Breed(object):
             self.lowspeed()
 
     def up(self):
-        self.radius = 10
+        self.radius = 5
         self.width = 0
         self.color = (255, 230, 0)
-        self.charge = 20
-        self.mass = 2
+        self.charge = 1
+        self.mass = 1.0073
         self.initialspeed = 5
 
     def lowspeed(self):
-        self.radius = 40
+        self.radius = 80
         self.width = 0
         self.color = (255, 230, 0)
-        self.charge = 20
-        self.mass = 100
-        self.initialspeed = 3
-
-    def down(self):
-        self.radius = 8
-        self.width = 0
-        self.color = (20, 150, 220)
-        self.charge = -10
-        self.mass = 1
+        self.charge = 3
+        self.mass = 10
         self.initialspeed = 5
 
+    def down(self):
+        self.radius = 4
+        self.width = 0
+        self.color = (20, 150, 220)
+        self.charge = 0
+        self.mass = 1.0078
+        self.initialspeed = 2
+
     def electron(self):
-        self.radius = 2
+        self.radius = 5
         self.width = 0
         self.color = (255, 140, 0)
-        self.charge = -30
-        self.mass = 0.1
+        self.charge = -1
+        self.mass = 1
         self.initialspeed = 5
 
 
@@ -364,7 +439,7 @@ for i in range(list_length - 1):
     totalMomentumY += quarkList[i].momentum[1]
 
 while run:
-    clock.tick(120)
+    clock.tick(60)
     count += 1
     keys = pygame.key.get_pressed()
     picker.callBreed()
@@ -386,11 +461,13 @@ while run:
     for quark in quarkList:
         quark.prevX = quark.x  #sets prev x for changeinx
         quark.prevY = quark.y  #sets prev y for changeiny
-        quark.setMomentum()
+        quark.prevVelocity = quark.velocity
+      #  quark.setMomentum()
         j = 0
-        if quark.bounce == 'wait' and count % 3 == 0:
+        if quark.bounce == 'wait' and count % 5 == 0:
             quark.bounce = 'ready'
         quark.checkScreenEdge()
+
         if quark.x < -((quark.radius * 2) + 100) or quark.x > screenWidth + (quark.radius * 2) + 100 or quark.y < -((quark.radius * 2) + 100) or quark.y > screenHeight + (quark.radius * 2) + 100:
             list_length -= 1
             quarkList.pop(quarkList.index(quark))
@@ -399,6 +476,10 @@ while run:
                                 quarkList[j].index('y'))  # distance between ball and ball[j]
             if quark == quarkList[j]:
                 continue  # if ball is not == to ball its comparing against
+            if dist > 400:
+                continue
+            if [quark.x, quark.y] != [quarkList[j].x, quarkList[j].y] and not quark.flagx and not quark.flagy:
+                resolvecharge(quark, quarkList[j], dist)
             #if quark.x + quark.radius >= quarkList[j].x - quarkList[j].radius and quark.x - quark.radius <= quarkList[j].x + quarkList[j].radius:
             #   if quark.y + quark.radius >= quarkList[j].y - quarkList[j].radius and quark.y - quark.radius <= quarkList[j].y + quarkList[j].radius:
             if (dist - (quark.radius + quarkList[j].index('radius'))) <= 0: #if balls intersect on j in list of balls
@@ -408,12 +489,12 @@ while run:
 
                     quark.velocity[0] = values[0]
                     quark.bounce = 'wait'
-                    quark.flagx = False
-                    quark.flagy = False
+                  #  quark.flagx = False
+                  #  quark.flagy = False
                     quarkList[j].velocity[0] = values[1]
                     quarkList[j].bounce = 'wait'
-                    quarkList[j].flagx = False
-                    quarkList[j].flagy = False
+                 #   quarkList[j].flagx = False
+                  #  quarkList[j].flagy = False
 
                     values = momentum(quark.mass, quarkList[j].mass, -quark.velocity[1], -quarkList[j].velocity[1])
 
@@ -433,14 +514,19 @@ while run:
 
                     quark.speed = abs((quark.velocity[0]) / (quark.trajectory[0]))
                     quarkList[j].speed = abs((quarkList[j].velocity[0]) / (quarkList[j].trajectory[0]))
-                    print("velox 1: " + str(quark.velocity[0]))
-                    print("velox 2: " + str(quarkList[j].velocity[0]))
-                    print("speed 1: " + str(quark.speed))
-                    print("speed 2: " + str(quarkList[j].speed))
+                  #  print("velox 1: " + str(quark.velocity[0]))
+                  #  print("velox 2: " + str(quarkList[j].velocity[0]))
+                  #  print("speed 1: " + str(quark.speed))
+                  #  print("speed 2: " + str(quarkList[j].speed))
+          #  else:
+             #   if not quark.flagx and not quark.flagy:
+               #     resolvecharge(quark, quarkList[j], dist)
             j = -1
-        quark.Trajectory()
+       # quark.Trajectory()
     totalMomentumX = 0
     totalMomentumY = 0
+    for quark in quarkList:
+        quark.Trajectory()
     for i in range(list_length - 1):
         totalMomentumX += quarkList[i].momentum[0]
         totalMomentumY += quarkList[i].momentum[1]
